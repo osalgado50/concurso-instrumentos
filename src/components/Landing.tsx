@@ -95,13 +95,16 @@ export default function Landing() {
           className="absolute inset-0 h-full w-full object-cover opacity-25"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-night/40 via-night/70 to-night" />
+        <div className="hero-lights" aria-hidden="true" />
         <div className="relative mx-auto max-w-5xl px-4 py-16 md:py-28 text-center">
           <p className="inline-block rounded-full border border-brand/40 bg-brand/10 px-4 py-1 text-sm text-brand">
             {badge}
           </p>
-          <h1 className="title-sweep mt-6 text-[clamp(2.9rem,11vw,6.75rem)] font-black tracking-tighter leading-[0.92] text-ink">
-            {config.title}
-          </h1>
+          <div className="title-glow mt-6">
+            <h1 className="title-sweep text-[clamp(2.9rem,11vw,6.75rem)] font-black tracking-tighter leading-[0.92] text-ink">
+              {config.title}
+            </h1>
+          </div>
           <p className="mt-6 text-xl md:text-2xl text-ink-soft max-w-2xl mx-auto leading-snug">
             Gana <strong className="text-ink">{config.prize}</strong>. Participa
             gratis desde {config.city}: sin compra, sin vueltas, y con un
@@ -136,16 +139,21 @@ export default function Landing() {
         aria-labelledby="premio"
         className="mx-auto max-w-6xl px-4 pt-4 pb-16 md:pb-24"
       >
-        <div className="relative isolate overflow-hidden rounded-3xl border border-brand/30 shadow-2xl shadow-brand/10 aspect-[4/5] sm:aspect-[16/10] lg:aspect-[21/9]">
-          <img
-            src={config.prizeImage}
-            alt="Guitarras eléctricas y amplificador sobre un escenario iluminado"
-            width={1920}
-            height={1024}
-            loading="lazy"
-            decoding="async"
-            className="prize-drift absolute inset-0 -z-10 h-full w-full object-cover object-[78%_55%]"
-          />
+        <div className="prize-card relative isolate overflow-hidden rounded-3xl border border-brand/30 shadow-2xl shadow-brand/10 aspect-[4/5] sm:aspect-[16/10] lg:aspect-[21/9]">
+          {/* Tres capas para que no se pisen los movimientos: deriva lenta, zoom al pasar el cursor y vaivén. */}
+          <div className="prize-drift absolute inset-0 -z-10">
+            <div className="prize-zoom h-full w-full">
+              <img
+                src={config.prizeImage}
+                alt="Guitarras eléctricas y amplificador sobre un escenario iluminado"
+                width={1920}
+                height={1024}
+                loading="lazy"
+                decoding="async"
+                className="prize-want h-full w-full object-cover object-[78%_55%]"
+              />
+            </div>
+          </div>
           <div className="absolute inset-0 -z-10 bg-gradient-to-t from-night via-night/45 to-transparent" />
           <div className="absolute inset-0 -z-10 bg-gradient-to-r from-night/80 via-night/20 to-transparent" />
 
