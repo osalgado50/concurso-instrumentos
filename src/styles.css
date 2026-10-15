@@ -143,6 +143,50 @@ button:focus-visible {
   transform: scale(1.2);
 }
 
+/* Cartelito «Cómo participar»: oculto en reposo, visible al pasar/enfocar y siempre en táctil. */
+.prize-sign {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+.prize-card:focus-within .prize-sign {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+@media (hover: hover) {
+  .prize-card:hover .prize-sign {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+@media (hover: none) {
+  .prize-sign {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .prize-arrow {
+    animation: arrow-bounce 1.1s ease-in-out infinite;
+  }
+}
+
+@keyframes arrow-bounce {
+  0%,
+  100% {
+    transform: translateY(-3px);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+
 @keyframes prize-want {
   0%,
   100% {

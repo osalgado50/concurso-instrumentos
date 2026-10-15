@@ -177,6 +177,35 @@ export default function Landing() {
               </a>
             )}
           </div>
+          {/* Cartelito: aparece al pasar por encima (en móvil, sin cursor, está siempre visible). */}
+          <button
+            type="button"
+            onClick={() =>
+              document
+                .getElementById('como-participar')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+            className="prize-sign absolute right-4 top-[4.5rem] md:top-auto md:bottom-14 md:right-8 flex items-center gap-3 rounded-2xl bg-ink px-5 py-3 text-left font-extrabold text-night shadow-xl shadow-black/40"
+          >
+            <span className="leading-tight">
+              Cómo participar
+              <span className="block text-sm font-semibold text-night/70">
+                Pasos y normas
+              </span>
+            </span>
+            <svg
+              className="prize-arrow h-7 w-7 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 4v15M6 13l6 6 6-6" />
+            </svg>
+          </button>
           {config.prizeImageIsPlaceholder && (
             <p className="absolute bottom-3 right-4 text-xs text-ink-soft/80">
               Foto ilustrativa
@@ -186,7 +215,7 @@ export default function Landing() {
       </section>
 
       {/* Cómo participar */}
-      <section className="mx-auto max-w-5xl px-4 py-16">
+      <section id="como-participar" className="scroll-mt-20 mx-auto max-w-5xl px-4 py-16">
         <h2 className="text-2xl md:text-3xl font-bold text-center">
           Cómo participar
         </h2>
