@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Página no encontrada</title>
+    <script>
+      // La web usa rutas con "#" (p. ej. /#/admin). Si alguien escribe /admin,
+      // /bases, /inscribir o /confirmar sin la almohadilla, se le reenvía a la
+      // ruta correcta, tanto en la raíz como en una subcarpeta (GitHub Pages).
+      (function () {
+        var m = location.pathname.match(/^(.*\/)(admin|bases|inscribir|confirmar)\/?$/);
+        if (m) {
+          location.replace(m[1] + '#/' + m[2] + location.search);
+        }
+      })();
+    </script>
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0e1420; color: #f1eee6; font-family: system-ui, sans-serif; text-align: center; padding: 1rem; }
+      a { display: inline-block; margin-top: 1rem; padding: .75rem 1.5rem; border-radius: .75rem; background: #f7b32b; color: #0e1420; font-weight: 700; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Página no encontrada</h1>
+      <p>Esta dirección no existe en el concurso.</p>
+      <a href="./">Ir al inicio</a>
+    </main>
+  </body>
+</html>
