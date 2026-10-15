@@ -1,27 +1,17 @@
 import { useEffect, useState } from 'react';
-import { findByToken, confirmParticipant } from '../lib/store';
+import { confirmParticipant } from '../lib/store';
+import type { ConfirmResult } from '../lib/store';
+import { confirmDeadline } from '../lib/state';
+import { fmt } from '../lib/time';
 
-type State = 'loading' | 'ok' | 'already' | 'invalid';
+type State = 'loading' | ConfirmResult;
 
 export default function Confirmar({ token }: { token: string }) {
   const [state, setState] = useState<State>('loading');
 
   useEffect(() => {
-    if (!token) {
-      setState('invalid');
-      return;
-    }
-    const p = findByToken(token);
-    if (!p) {
-      setState('invalid');
-      return;
-    }
-    if (p.status === 'confirmado') {
-      setState('already');
-      return;
-    }
-    confirmParticipant(token);
-    setState('ok');
+    // confirmParticipant es idempotente: ejecutarlo dos veces (StrictMode) no duplica nada.
+    setState(confirmParticipant(token));
   }, [token]);
 
   return (
@@ -31,9 +21,7 @@ export default function Confirmar({ token }: { token: string }) {
 
         {state === 'ok' && (
           <>
-            <h1 className="text-2xl font-black text-brand">
-              ¡Confirmado! Ya participas 🎸
-            </h1>
+            <h1 className="text-2xl font-black text-brand">¡Confirmado! Ya participas 🎸</h1>
             <p className="mt-3 text-ink-soft">
               Tu inscripción quedó confirmada. El día del sorteo elegimos al
               ganador al azar entre todas las participaciones confirmadas y
@@ -52,8 +40,23 @@ export default function Confirmar({ token }: { token: string }) {
           <>
             <h1 className="text-2xl font-black">Ya estabas confirmado</h1>
             <p className="mt-3 text-ink-soft">
-              Esta inscripción ya había sido confirmada. No hace falta hacer
-              nada más.
+              Esta inscripción ya había sido confirmada. No hace falta hacer nada más.
+            </p>
+            <a
+              href="#/"
+              className="mt-6 inline-block rounded-xl border border-white/20 px-8 py-3 font-semibold hover:bg-white/5 transition"
+            >
+              Volver al inicio
+            </a>
+          </>
+        )}
+
+        {state === 'expired' && (
+          <>
+            <h1 className="text-2xl font-black">El plazo para confirmar terminó</h1>
+            <p className="mt-3 text-ink-soft">
+              Las confirmaciones se aceptaban hasta el {fmt(confirmDeadline())} (hora de
+              Tijuana). Las inscripciones sin confirmar a tiempo no entran al sorteo.
             </p>
             <a
               href="#/"

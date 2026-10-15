@@ -1,13 +1,41 @@
 import { useState } from 'react';
 import { addParticipant } from '../lib/store';
-import { isOpen } from '../lib/state';
+import type { AddResult } from '../lib/store';
+import { isOpen, isStarted, deadline } from '../lib/state';
+import { useNow } from '../lib/useNow';
+import { fmt } from '../lib/time';
 import type { Participant } from '../types';
 
 const inputCls =
   'w-full rounded-xl border border-white/15 bg-night-soft px-4 py-3 text-ink placeholder:text-ink-soft/60 focus:outline-none focus:ring-2 focus:ring-brand';
 
+type Failure = Extract<AddResult, { ok: false }>;
+
+function messageFor(f: Failure): string {
+  switch (f.reason) {
+    case 'not_started':
+      return 'Las inscripciones todavía no han abierto.';
+    case 'closed':
+      return 'Las inscripciones ya cerraron.';
+    case 'nombre':
+      return 'Escribe tu nombre completo (entre 2 y 100 caracteres).';
+    case 'email':
+      return 'Escribe un correo electrónico válido.';
+    case 'telefono':
+      return 'El teléfono debe tener entre 10 y 13 dígitos (o déjalo vacío).';
+    case 'bases':
+      return 'Para participar debes aceptar las bases y el aviso de privacidad.';
+    case 'duplicate':
+      return f.status === 'pendiente'
+        ? 'Ese correo ya está inscrito pero sin confirmar. Revisa tu correo y usa el enlace de confirmación.'
+        : 'Ese correo ya está inscrito. Cada correo participa una sola vez.';
+  }
+}
+
 export default function Inscribir() {
-  const open = isOpen();
+  // El reloj hace que el formulario se cierre solo al llegar la hora límite.
+  const now = useNow();
+  const open = isOpen(now);
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -19,38 +47,19 @@ export default function Inscribir() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!open) {
-      setError('Las inscripciones están cerradas.');
-      return;
-    }
-    if (nombre.trim().length < 2 || nombre.trim().length > 100) {
-      setError('Escribe tu nombre completo (entre 2 y 100 caracteres).');
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
-      setError('Escribe un correo electrónico válido.');
-      return;
-    }
-    if (telefono.trim().length > 20) {
-      setError('El teléfono es demasiado largo.');
-      return;
-    }
-    if (!bases) {
-      setError('Para participar debes aceptar las bases y el aviso de privacidad.');
-      return;
-    }
-    const p = addParticipant({
-      nombre: nombre.trim(),
-      email: email.trim(),
-      telefono: telefono.trim(),
-      consentBases: true,
+    // La comprobación real de fecha se hace dentro de addParticipant, con la hora de este instante.
+    const r = addParticipant({
+      nombre,
+      email,
+      telefono,
+      consentBases: bases,
       commsOptIn: comms,
     });
-    if (!p) {
-      setError('Ese correo ya está inscrito. Cada correo participa una sola vez.');
+    if (!r.ok) {
+      setError(messageFor(r));
       return;
     }
-    setDone(p);
+    setDone(r.participant);
   }
 
   if (done) {
@@ -63,9 +72,7 @@ export default function Inscribir() {
             Falta un paso: confirma tu correo. En la versión final, este enlace
             te llega por correo electrónico; por ahora lo ves aquí mismo.
           </p>
-          <p className="mt-4 break-all rounded-lg bg-night p-3 text-sm">
-            {link}
-          </p>
+          <p className="mt-4 break-all rounded-lg bg-night p-3 text-sm">{link}</p>
           <a
             href={`#/confirmar?t=${done.token}`}
             className="mt-6 inline-block rounded-xl bg-brand px-8 py-3 font-bold text-night hover:brightness-110 transition"
@@ -88,13 +95,18 @@ export default function Inscribir() {
       </p>
 
       {!open && (
-        <p className="mt-6 rounded-xl border border-red-400/40 bg-red-400/10 p-4 text-center text-red-200">
-          Las inscripciones están cerradas en este momento.
+        <p
+          role="status"
+          className="mt-6 rounded-xl border border-red-400/40 bg-red-400/10 p-4 text-center text-red-200"
+        >
+          {isStarted(now)
+            ? `Las inscripciones cerraron el ${fmt(deadline())} (hora de Tijuana).`
+            : 'Las inscripciones todavía no han abierto.'}
         </p>
       )}
 
       {error && (
-        <p className="mt-6 rounded-xl border border-red-400/40 bg-red-400/10 p-4 text-red-200">
+        <p role="alert" className="mt-6 rounded-xl border border-red-400/40 bg-red-400/10 p-4 text-red-200">
           {error}
         </p>
       )}
@@ -171,7 +183,7 @@ export default function Inscribir() {
           />
           <span>
             Quiero recibir noticias, promociones y novedades de la tienda.
-            Opcional y independiente del concurso.
+            Opcional: no afecta a mi participación en el concurso.
           </span>
         </label>
 

@@ -1,12 +1,7 @@
 import { config } from '../config';
-import { isOpen, isStarted, deadline } from '../lib/state';
-
-function fmt(d: Date) {
-  return d.toLocaleString('es-MX', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-  });
-}
+import { isOpen, isStarted, deadline, confirmDeadline } from '../lib/state';
+import { useNow } from '../lib/useNow';
+import { fmt } from '../lib/time';
 
 const steps = [
   {
@@ -37,7 +32,7 @@ const trust = [
   },
   {
     t: 'Sorteo demostrable',
-    d: 'La selección del ganador se hace al azar y queda registrada con fecha y lista de participantes.',
+    d: 'La selección del ganador se hace al azar y queda registrada con fecha, lista de participantes y una huella que permite comprobar que no se alteró.',
   },
   {
     t: 'Tus datos, tu decisión',
@@ -46,10 +41,12 @@ const trust = [
 ];
 
 export default function Landing() {
-  const open = isOpen();
+  // El reloj refresca la insignia y los botones al llegar la hora de apertura o cierre.
+  const now = useNow();
+  const open = isOpen(now);
   const badge = open
     ? `Inscripciones abiertas · cierran el ${fmt(deadline())}`
-    : isStarted()
+    : isStarted(now)
       ? 'Inscripciones cerradas'
       : `Abren el ${fmt(new Date(config.startDate))}`;
 
@@ -60,6 +57,10 @@ export default function Landing() {
         <img
           src={config.heroImage}
           alt=""
+          width={1920}
+          height={1024}
+          fetchPriority="high"
+          decoding="async"
           className="absolute inset-0 h-full w-full object-cover opacity-25"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-night/40 via-night/70 to-night" />
@@ -76,12 +77,18 @@ export default function Landing() {
             ganador que nadie pueda discutir.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href="#/inscribir"
-              className="rounded-xl bg-brand px-8 py-4 text-lg font-bold text-night shadow-lg shadow-brand/20 hover:brightness-110 transition"
-            >
-              Participar gratis
-            </a>
+            {open ? (
+              <a
+                href="#/inscribir"
+                className="rounded-xl bg-brand px-8 py-4 text-lg font-bold text-night shadow-lg shadow-brand/20 hover:brightness-110 transition"
+              >
+                Participar gratis
+              </a>
+            ) : (
+              <span className="rounded-xl bg-white/10 px-8 py-4 text-lg font-bold text-ink-soft">
+                {isStarted(now) ? 'Inscripciones cerradas' : 'Próximamente'}
+              </span>
+            )}
             <a
               href="#/bases"
               className="rounded-xl border border-white/20 px-8 py-4 font-semibold hover:bg-white/5 transition"
@@ -129,6 +136,10 @@ export default function Landing() {
             <p className="mt-1 font-bold">{fmt(new Date(config.drawDate))}</p>
           </div>
         </div>
+        <p className="mt-4 text-center text-sm text-ink-soft">
+          Todas las horas son de {config.city.split(',')[0]} (zona {config.timeZone}). Puedes
+          confirmar tu correo hasta el {fmt(confirmDeadline())}.
+        </p>
       </section>
 
       {/* Juego limpio */}
@@ -148,12 +159,14 @@ export default function Landing() {
           ))}
         </div>
         <div className="mt-12 text-center">
-          <a
-            href="#/inscribir"
-            className="inline-block rounded-xl bg-brand px-10 py-4 text-lg font-bold text-night hover:brightness-110 transition"
-          >
-            Quiero participar
-          </a>
+          {open && (
+            <a
+              href="#/inscribir"
+              className="inline-block rounded-xl bg-brand px-10 py-4 text-lg font-bold text-night hover:brightness-110 transition"
+            >
+              Quiero participar
+            </a>
+          )}
         </div>
       </section>
     </div>

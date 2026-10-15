@@ -1,9 +1,6 @@
 import { config } from '../config';
-import { deadline } from '../lib/state';
-
-function fmt(d: Date) {
-  return d.toLocaleString('es-MX', { dateStyle: 'long', timeStyle: 'short' });
-}
+import { deadline, confirmDeadline } from '../lib/state';
+import { fmt } from '../lib/time';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -22,8 +19,17 @@ export default function Bases() {
       </h1>
       <p className="mt-2 text-ink-soft">
         Organizado por {config.storeName}, {config.city}. Leídas y aceptadas
-        antes de participar.
+        antes de participar. Versión {config.basesVersion}.
       </p>
+      {config.legalDraft && (
+        <p
+          role="note"
+          className="mt-4 rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 text-sm text-amber-200"
+        >
+          Texto provisional: pendiente de las bases definitivas del cliente y de
+          revisión legal antes de publicar el concurso.
+        </p>
+      )}
 
       <Section title="1. Organizador">
         <p>
@@ -53,8 +59,13 @@ export default function Bases() {
         <ul className="list-disc pl-6 space-y-1">
           <li>Apertura de inscripciones: {fmt(new Date(config.startDate))}.</li>
           <li>Cierre de inscripciones: {fmt(deadline())}. Las inscripciones se cierran automáticamente en esa fecha y hora; lo que llegue después no participa.</li>
+          <li>Confirmación del correo: hasta el {fmt(confirmDeadline())}. Pasado ese plazo, las inscripciones sin confirmar no entran al sorteo.</li>
           <li>Sorteo: {fmt(new Date(config.drawDate))}.</li>
         </ul>
+        <p>
+          Todas las fechas y horas se indican en hora de {config.city.split(',')[0]}{' '}
+          ({config.timeZone}), sin importar desde dónde se participe.
+        </p>
       </Section>
 
       <Section title="4. Cómo participar">
@@ -77,9 +88,12 @@ export default function Bases() {
         <p>
           El ganador se elige <strong className="text-ink">al azar</strong> entre
           todas las inscripciones confirmadas recibidas antes del cierre. La
-          selección se realiza con un procedimiento aleatorio y queda
-          registrada con fecha, lista de participantes del bombo y resultado,
-          de forma que el proceso pueda verificarse.
+          selección se realiza con un generador de números aleatorios
+          criptográfico y queda registrada con fecha, lista de participantes
+          del bombo, resultado y una huella (SHA-256) que encadena cada
+          selección con la anterior, de forma que cualquier alteración
+          posterior del registro pueda detectarse. La huella final se publica
+          junto con el resultado.
         </p>
         <p>
           Si el ganador no responde dentro de{' '}
@@ -97,17 +111,37 @@ export default function Bases() {
         </p>
       </Section>
 
-      <Section title="8. Protección de datos">
+      <Section title="8. Aviso de privacidad">
         <p>
-          Los datos se usan únicamente para gestionar el concurso y el sorteo:
-          identificar participantes, evitar duplicados, contactar al ganador y
-          poder demostrar el resultado. Por un lado, la aceptación de estas
-          bases y del aviso de privacidad es obligatoria para participar. Por
-          otro, el permiso para recibir noticias y promociones de la tienda es{' '}
-          <strong className="text-ink">voluntario y se recoge por separado</strong>:
-          no participar en el sorteo está condicionado a dar ese permiso, y
-          puedes pedir en cualquier momento dejar de recibir comunicaciones
-          escribiendo a {config.contactEmail}.
+          <strong className="text-ink">Responsable:</strong> {config.storeName},{' '}
+          {config.city}. Contacto: {config.contactEmail}.
+        </p>
+        <p>
+          <strong className="text-ink">Datos que se recaban:</strong> nombre,
+          correo electrónico y, si lo das, teléfono. También se guardan la
+          fecha de tu inscripción, la de tu confirmación y la versión de estas
+          bases que aceptaste.
+        </p>
+        <p>
+          <strong className="text-ink">Finalidades necesarias:</strong> gestionar
+          el concurso y el sorteo, identificar participantes, evitar
+          duplicados, contactar al ganador y poder demostrar el resultado. La
+          aceptación de estas bases y de este aviso es obligatoria para
+          participar.
+        </p>
+        <p>
+          <strong className="text-ink">Finalidad opcional:</strong> enviarte
+          noticias y promociones de la tienda. Es{' '}
+          <strong className="text-ink">voluntaria, se pide por separado y no
+          afecta a tu participación</strong>: puedes participar sin darla. Si
+          la das, puedes retirarla cuando quieras escribiendo a{' '}
+          {config.contactEmail}.
+        </p>
+        <p>
+          <strong className="text-ink">Tus derechos:</strong> puedes ejercer
+          tus derechos de acceso, rectificación, cancelación y oposición (ARCO)
+          escribiendo a {config.contactEmail}. No transferimos tus datos a
+          terceros salvo obligación legal.
         </p>
       </Section>
 
