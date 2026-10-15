@@ -37,6 +37,30 @@ export function normalizeEmail(email: string): string {
   return `${local}@gmail.com`;
 }
 
+/**
+ * Limpia un teléfono mientras se escribe o se pega: solo deja dígitos y los
+ * símbolos de marcación habituales ( ) - + # * y espacios. El "+" solo vale al
+ * principio (prefijo internacional). Las letras nunca pasan.
+ */
+export function sanitizePhone(raw: string): string {
+  // Se quita lo no permitido, se juntan los espacios repetidos y los del principio.
+  const cleaned = raw
+    .replace(/[^\d\s()+\-#*]/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/^\s+/, '');
+  const plus = cleaned.startsWith('+') ? '+' : '';
+  return (plus + cleaned.replace(/\+/g, '')).slice(0, 25);
+}
+
+const PHONE_CHARS = /^\+?[\d\s()\-#*]+$/;
+
+/** Un teléfono es válido si solo lleva caracteres permitidos y entre 10 y 13 dígitos. */
+export function isValidPhone(telefono: string): boolean {
+  if (!PHONE_CHARS.test(telefono)) return false;
+  const digits = telefono.replace(/\D/g, '');
+  return digits.length >= 10 && digits.length <= 13;
+}
+
 export function findParticipant(emailKey: string): Participant | undefined {
   return getParticipants().find((p) => p.emailKey === emailKey);
 }
@@ -85,8 +109,7 @@ export function addParticipant(input: AddInput, now: Date = new Date()): AddResu
   if (!EMAIL_RE.test(emailKey) || emailKey.length > 255) return { ok: false, reason: 'email' };
 
   const telefono = input.telefono.trim();
-  const digits = telefono.replace(/\D/g, '');
-  if (telefono && (digits.length < 10 || digits.length > 13)) return { ok: false, reason: 'telefono' };
+  if (telefono && !isValidPhone(telefono)) return { ok: false, reason: 'telefono' };
 
   if (!input.consentBases) return { ok: false, reason: 'bases' };
 

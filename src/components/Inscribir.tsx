@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { addParticipant } from '../lib/store';
+import { addParticipant, sanitizePhone } from '../lib/store';
 import type { AddResult } from '../lib/store';
 import { isOpen, isStarted, deadline, confirmDeadline } from '../lib/state';
 import { confirmationEmail } from '../lib/emails';
@@ -23,7 +23,7 @@ function messageFor(f: Failure): string {
     case 'email':
       return 'Escribe un correo electrónico válido.';
     case 'telefono':
-      return 'El teléfono debe tener entre 10 y 13 dígitos (o déjalo vacío).';
+      return 'El teléfono solo puede llevar números y los símbolos + ( ) - # *, con entre 10 y 13 dígitos (o déjalo vacío).';
     case 'bases':
       return 'Para participar debes aceptar las bases y el aviso de privacidad.';
     case 'duplicate':
@@ -157,8 +157,9 @@ export default function Inscribir() {
             type="tel"
             className={inputCls}
             value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            maxLength={20}
+            // Filtra al escribir y al pegar: sin letras, solo números y símbolos de marcación.
+            onChange={(e) => setTelefono(sanitizePhone(e.target.value))}
+            placeholder="+52 (664) 123 4567"
             autoComplete="tel"
             inputMode="tel"
           />
