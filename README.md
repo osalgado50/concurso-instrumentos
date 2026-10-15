@@ -52,7 +52,7 @@ Esta versión no tiene backend. Esto es lo que es simulado, lo que no existe y l
 
 ## Datos de ejemplo y cómo reiniciarlos
 
-El panel viene con **20 inscripciones ficticias** (16 confirmadas y 4 sin confirmar, 11 con permiso de comunicaciones, con y sin permiso de comunicaciones, con y sin teléfono; nombres y correos inventados con el dominio `ejemplo.mx`).
+El panel viene con **20 inscripciones ficticias** (16 confirmadas y 4 sin confirmar, 11 con permiso de comunicaciones y algunas sin teléfono; nombres y correos inventados con el dominio `ejemplo.mx`).
 
 - **Se cargan solas** la primera vez que se entra al panel en un navegador sin datos. Al entrar verás la barra «Modo demostración».
 - **Recargarlas:** botón «Cargar datos de ejemplo» (o «Recargar datos de ejemplo») de esa barra. Sustituye lo que haya guardado en el navegador.
