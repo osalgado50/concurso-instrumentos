@@ -1,32 +1,89 @@
-# Gran Concurso de Instrumentos — Landing
+# Gran Concurso de Instrumentos
 
-Landing del concurso para captar contactos de la tienda de instrumentos musicales en Tijuana: formulario mínimo, confirmación de correo, control de duplicados, cierre automático de inscripciones, panel de administración con exportación y sorteo demostrable.
+Landing de concurso para una tienda de instrumentos musicales de Tijuana (México). Objetivo: **captar contactos de verdad** con un concurso sencillo y transparente: sin inscripciones repetidas, con bases y consentimiento claros, con doble confirmación para que la lista sea real y con un sorteo que se pueda demostrar.
 
-## Tecnologías
+- **Previsualización (Vercel):** https://concurso-instrumentos.vercel.app/
+- **Previsualización (GitHub Pages):** https://osalgado50.github.io/concurso-instrumentos/
+- **Repositorio:** https://github.com/osalgado50/concurso-instrumentos
+- **Panel de administración:** `/admin` (clave de demo más abajo)
 
-React 19 + Vite + TypeScript + Tailwind CSS. Los datos se guardan en el `localStorage` del navegador (sin backend).
+> **Estado:** demostración funcional completa según el encargo (React + `localStorage` + Lovable, sin backend). Los materiales del cliente aún no existen: la web usa datos ficticios realistas, listados en [Materiales del cliente pendientes](#materiales-del-cliente-pendientes-datos-ficticios-en-su-lugar). El envío real de correos y el backend definitivo se conectan en el pulido final.
 
-## Desarrollo
+---
 
-Desde tu ordenador, dentro de la carpeta del proyecto:
+## Criterios de aceptación
 
-```bash
-npm install
-npm run dev      # servidor local
-npm test         # tests de las reglas del concurso (vitest)
-npm run build    # comprueba tipos y genera dist/
-```
+| # | Criterio | Estado | Cómo se comprueba |
+|---|---|---|---|
+| 1 | Un correo solo puede inscribirse una vez, aunque cambie mayúsculas o espacios | Cumplido | El correo se normaliza antes de comparar: Unicode NFKC, sin espacios y en minúsculas. En Gmail/Googlemail también se ignoran los puntos y la etiqueta tras «+». Tests en `tests/concurso.test.ts`. |
+| 2 | Una inscripción sin confirmar no participa | Cumplido | Solo las inscripciones confirmadas entran al bombo del sorteo. Test: una inscripción pendiente nunca aparece en el bombo. |
+| 3 | Las inscripciones se cierran solas en la fecha y hora indicadas | Cumplido | La fecha se comprueba **al guardar** cada inscripción (un formulario que se quedó abierto ya no puede inscribir) y la pantalla se cierra sola al llegar la hora. Fechas con zona horaria (`America/Tijuana`). Tests en el instante exacto del cierre. |
+| 4 | La selección de ganador registra fecha, participantes y resultado, y se puede repetir para suplentes | Cumplido | Cada sorteo guarda fecha, ids y huella SHA-256 del bombo, excluidos, algoritmo y resultado, encadenado con el anterior. Los suplentes excluyen a quien ya salió. El panel verifica la cadena. |
+| 5 | El permiso de comunicaciones se guarda por separado del consentimiento de bases | Cumplido | Dos casillas distintas y dos registros distintos, cada uno con su fecha (el de bases, con la versión aceptada). Rechazar las comunicaciones no impide participar. |
+| 6 | Carga en menos de dos segundos en móvil | Cumplido en medición | Lighthouse en modo móvil (red 4G lenta, CPU ralentizada) sobre la web publicada, 15-oct-2026: puntuación 99–100, primer contenido 1,3 s, contenido principal 1,7 s, interactiva 1,7 s, sin saltos de diseño. JS de 84 kB comprimido; foto de portada en WebP de 90 kB. |
+| 7 | Repositorio en GitHub o proyecto transferido en Lovable, con URL de previsualización funcionando | Cumplido | Repositorio en GitHub y dos URLs de previsualización (arriba). |
 
-## Configuración
+Además del encargo: teléfono opcional que solo admite números y símbolos de marcación (`+ ( ) - # *`), correo de confirmación y aviso al ganador preparados, y registro de actividad del panel.
 
-Todo lo editable está en `src/config.ts` (lo marcado PROVISIONAL hay que sustituirlo con los datos del cliente):
+### Alcance de la demostración (importante para revisar los criterios 2 y 3)
 
-- Nombre de la tienda, ciudad, premio y correo de contacto.
-- `timeZone` (`America/Tijuana`) y fechas de apertura, cierre y sorteo **con su desfase horario** (`-07:00` hasta el 1-nov-2026, `-08:00` después). Todas las fechas se muestran y se aplican en hora de Tijuana, sin importar desde dónde entre el visitante.
-- `confirmGraceHours`: horas tras el cierre en las que aún se puede confirmar el correo (24). El sorteo se habilita cuando termina ese margen.
-- `basesVersion`: versión de las bases; se guarda con el consentimiento de cada participante. Cámbiala cuando cambie el texto legal.
-- `legalDraft`: mientras sea `true`, las bases muestran un aviso de texto provisional pendiente de revisión legal.
-- `adminCode`: código del panel (o variable `VITE_ADMIN_CODE`). **Cámbialo antes de publicar.**
+Al no haber backend, estas dos garantías son completas en la lógica pero tienen un límite técnico que se resuelve al conectar el servidor:
+
+- **Criterio 2:** la confirmación por correo es **simulada**: la persona ve el correo en pantalla con su enlace. Hasta que se envíe por correo real, cualquiera podría «confirmar» un correo que no es suyo.
+- **Criterio 3:** el cierre automático usa la hora del dispositivo del visitante. Con servidor se usaría la hora del servidor.
+- **Criterio 1:** la comprobación de duplicados es por navegador, no entre dispositivos.
+
+---
+
+## Cómo funciona
+
+### Landing (`#/`)
+
+Premio como protagonista (tarjeta destacada con zoom y cartelito «Cómo participar» al pasar el cursor), cuenta atrás hasta el cierre, tres pasos, fechas en hora de Tijuana y bloque de «juego limpio». Los botones se ocultan o desactivan cuando las inscripciones no están abiertas.
+
+### Inscripción (`#/inscribir`)
+
+Cabe en una pantalla de móvil: nombre, correo, teléfono (opcional, solo números y `+ ( ) - # *`), casilla obligatoria de bases y privacidad, y casilla **separada y opcional** de comunicaciones. Tras inscribirse se muestra el correo de confirmación simulado con su enlace.
+
+### Confirmación (`#/confirmar?t=…`)
+
+Confirma la participación con un enlace de un solo uso. Distingue confirmada, ya confirmada, caducada (pasado el margen tras el cierre) y enlace no válido.
+
+### Bases (`#/bases`)
+
+Bases legales completas y accesibles, con aviso de privacidad (derechos ARCO). **Texto provisional** (ver materiales pendientes).
+
+### Panel de administración (`#/admin`)
+
+- **Clave de demo: `tijuana2026`** (`adminCode` en `src/config.ts`, o variable `VITE_ADMIN_CODE`). Acceso simulado: la clave viaja en el JavaScript y no es seguridad real.
+- **Resumen:** inscripciones, confirmadas, sin confirmar y sorteos hechos.
+- **Participantes:** lista con estado y consentimientos; exportación a CSV (todos, confirmados, con permiso de comunicaciones); confirmación manual (queda marcada y registrada).
+- **Sorteo:** habilitado al terminar el margen de confirmación; verifica la integridad del registro y muestra la huella final para publicarla junto al resultado.
+- **Correos:** plantillas de confirmación y de ganador/suplente, con botón de copiar.
+- **Ajustes:** fecha de cierre (en hora de Tijuana), cerrar ahora y reabrir; bloqueados tras el primer sorteo.
+- **Actividad:** registro de cambios de fecha, cierres, confirmaciones manuales, eliminaciones y sorteos, exportable.
+
+Para probar el sorteo antes de la fecha real: en **Ajustes** pon un cierre pasado (por ejemplo, hace dos días) o usa «Cerrar inscripciones ahora» y espera el margen de confirmación; la pestaña Sorteo se habilitará.
+
+### Rutas
+
+La web usa rutas con almohadilla (`/#/admin`). Si alguien escribe `/admin`, `/bases`, `/inscribir` o `/confirmar` sin ella, `public/404.html` lo reenvía a la ruta correcta (funciona en la raíz y en la subcarpeta de GitHub Pages).
+
+---
+
+## Reglas del concurso
+
+- **Un correo, una inscripción.** Mayúsculas, espacios, formas Unicode equivalentes y, en Gmail, puntos y «+etiqueta» cuentan como el mismo correo.
+- **Solo participan los confirmados.** Quien no confirma dentro del plazo no entra al bombo.
+- **Cierre automático real**, con comprobación al guardar y fechas con zona horaria.
+- **Margen de confirmación** (`confirmGraceHours`, 24 h) tras el cierre; el sorteo se habilita cuando termina.
+- **Consentimientos separados** (bases/privacidad y comunicaciones), cada uno con su fecha.
+- **Sorteo demostrable.** Generador criptográfico (`crypto.getRandomValues`) con muestreo por rechazo (sin sesgo). Cada selección guarda fecha, bombo, huella del bombo, excluidos, algoritmo y resultado, y se encadena con la anterior mediante otra huella SHA-256. Repetible para suplentes. El registro no se puede borrar desde el panel.
+- **Congelación.** Tras el primer sorteo no se puede eliminar inscripciones, confirmar a mano ni mover o reabrir el cierre.
+- **CSV seguros.** Se neutralizan las fórmulas (`=`, `+`, `-`, `@`) y se incluyen los consentimientos con fecha y versión.
+- **Sin mecánicas de redes sociales ni compra o pago**, como pide el encargo.
+
+---
 
 ## Materiales del cliente pendientes (datos ficticios en su lugar)
 
@@ -36,51 +93,81 @@ El cliente todavía no ha entregado ninguno de estos materiales (en el encargo f
 |---|---|---|---|
 | **Bases legales del concurso** | Sin enlace todavía | Texto inventado y completo (participación, plazos, sorteo, suplentes, aviso de privacidad). Muestra un aviso de «borrador pendiente de revisión legal». | `src/components/Bases.tsx`; luego `legalDraft: false` y subir `basesVersion` en `src/config.ts` |
 | **Fotografía del premio** | Sin enlace todavía | Foto de ejemplo (guitarras y amplificador en un escenario) con la nota «Foto ilustrativa». | Poner la foto en `public/` y cambiar `prizeImage` en `src/config.ts`; poner `prizeImageIsPlaceholder: false` |
-| **Logotipo** | Sin enlace todavía | Solo el nombre de la tienda en texto, en la cabecera. | Cabecera en `src/App.tsx` |
+| **Logotipo y marca** | Sin enlace todavía | Solo el nombre de la tienda en texto, en la cabecera, con la paleta provisional. | Cabecera en `src/App.tsx`; colores en `src/styles.css` |
 | **Fechas y mecánica** | Sin enlace todavía | Apertura 15-oct-2026, cierre 30-nov-2026 23:59, sorteo 2-dic-2026 17:00 (hora de Tijuana); un ganador y suplentes; 24 h para confirmar tras el cierre. | `startDate`, `endDate`, `drawDate`, `confirmGraceHours` en `src/config.ts` |
 | Nombre de la tienda, premio y su valor, correo de contacto | Sin datos | «Tu Tienda de Instrumentos», guitarra eléctrica con amplificador (~$8,000 MXN), `concurso@tutiendadeinstrumentos.mx` | `storeName`, `prize`, `prizeHeadline`, `prizeValue`, `contactEmail` en `src/config.ts` |
 
 Todo lo ficticio está marcado como `PROVISIONAL` en `src/config.ts`. Las bases inventadas **no tienen validez legal** hasta que las revise un abogado y, si procede, se confirme si este tipo de sorteo requiere permiso ante la Secretaría de Gobernación.
 
-## Acceso al panel de administración (demo)
+### Configuración (`src/config.ts`)
 
-- Ruta: `#/admin`
-- **Clave de demo: `tijuana2026`** (definida en `adminCode` de `src/config.ts`, o con la variable `VITE_ADMIN_CODE`).
-- Es un acceso simulado, como pide el encargo: la clave viaja en el JavaScript y no es seguridad real. El backend definitivo lo conecta el equipo del cliente en el pulido final.
+- `timeZone` (`America/Tijuana`) y fechas con su desfase horario (`-07:00` hasta el 1-nov-2026, `-08:00` después). Todas las fechas se muestran y se aplican en hora de Tijuana, sin importar desde dónde entre el visitante.
+- `confirmGraceHours`: horas tras el cierre en las que aún se puede confirmar el correo.
+- `basesVersion`: versión de las bases; se guarda con el consentimiento de cada participante. Cámbiala cuando cambie el texto legal.
+- `legalDraft`: mientras sea `true`, las bases muestran el aviso de borrador.
+- `adminCode`: clave del panel. **Cámbiala antes de publicar.**
+
+---
 
 ## Plantillas de correo
 
-Las plantillas están preparadas en `src/lib/emails.ts`:
+Preparadas en `src/lib/emails.ts`:
 
 - **Confirmación de inscripción** (doble validación): lleva el enlace de confirmación y el plazo.
-- **Aviso a ganador o suplente**, con el plazo de respuesta.
+- **Aviso a ganador o suplente**, con el plazo para responder.
 
-En esta versión **no se envía ningún correo**: al inscribirse la persona ve el correo de confirmación en pantalla (con su enlace y un botón de confirmar), y la pestaña **Correos** del panel muestra ambas plantillas y permite copiarlas. El envío real se conecta más adelante usando esas mismas funciones.
+En esta versión **no se envía ningún correo**: al inscribirse se ve el correo de confirmación en pantalla (con su enlace y un botón de confirmar), y la pestaña **Correos** del panel muestra ambas plantillas y permite copiarlas. El envío real se conecta usando esas mismas funciones.
 
-## Reglas del concurso
+---
 
-- **Un correo, una inscripción.** El correo se normaliza (Unicode NFKC, sin espacios, minúsculas) antes de comparar.
-- **Solo participan los confirmados.** Quien no confirma su correo dentro del plazo no entra al bombo.
-- **Cierre automático real.** La fecha se comprueba al guardar cada inscripción (no solo al pintar el formulario) y la interfaz se cierra sola al llegar la hora.
-- **Consentimientos separados.** Las bases/privacidad y el permiso de comunicaciones viven en un registro aparte del participante, cada uno con su fecha y, el de bases, con la versión aceptada.
-- **Sorteo demostrable.** Generador criptográfico con muestreo por rechazo (sin sesgo). Cada selección guarda fecha, ids del bombo, huella SHA-256 del bombo, excluidos, algoritmo y resultado, y se **encadena** con la anterior mediante otra huella. El panel verifica la cadena y avisa si algo se alteró. Repetible para suplentes (excluye a quien ya salió). El registro **no se puede borrar** desde el panel.
-- **Congelación.** Tras el primer sorteo ya no se pueden eliminar inscripciones, confirmar a mano ni mover/reabrir el cierre.
-- **Registro de actividad.** Cambios de fecha, cierres/reaperturas, confirmaciones manuales (marcadas "manual" en los datos y en el CSV), eliminaciones y sorteos quedan anotados y se exportan.
-- **CSV seguros.** Se neutralizan las fórmulas (`=`, `+`, `-`, `@`) y se incluyen los consentimientos con fecha y versión.
+## Desarrollo
 
-## Panel de administración
+Desde tu ordenador, dentro de la carpeta del proyecto:
 
-Ruta `#/admin` (clave de demo en la sección anterior). Pestañas: Resumen, Participantes (exportar todo / confirmados / permiso de comunicaciones), Sorteo (con verificación de integridad y huella final para publicar), Correos (plantillas de confirmación y de ganador), Ajustes (fecha y cierre manual, en hora de Tijuana) y Actividad.
+```bash
+npm install
+npm run dev      # servidor local
+npm test         # 31 tests de las reglas del concurso (vitest)
+npm run build    # comprueba tipos y genera dist/
+npm run preview  # sirve dist/ en local
+```
 
-Para probar el sorteo antes de la fecha real: en **Ajustes** pon un cierre pasado (por ejemplo, hace dos días) o usa "Cerrar inscripciones ahora" y espera el margen de confirmación; la pestaña Sorteo se habilitará.
+### Estructura
 
-## Limitaciones (importantes)
+```
+src/
+  config.ts            datos del concurso (lo PROVISIONAL se sustituye aquí)
+  types.ts             tipos de datos
+  components/          Landing, Inscribir, Confirmar, Bases, Admin
+  lib/
+    store.ts           inscripciones, duplicados, confirmaciones, validaciones
+    draw.ts            sorteo y cadena de huellas
+    state.ts           fechas: apertura, cierre, margen, sorteo habilitado
+    emails.ts          plantillas de correo
+    csv.ts             exportaciones seguras
+    storage.ts         lectura y escritura en localStorage
+    time.ts, useNow.ts fechas por zona horaria y reloj reactivo
+public/                404.html (reenvío de rutas), imagen de portada, favicon
+tests/                 concurso, emails y teléfono (vitest)
+```
 
-Esta versión sigue el stack del encargo (React + `localStorage` + Lovable), sin backend. Es una demostración funcional; lo siguiente se resuelve al conectar el backend definitivo:
+Los datos viven en el `localStorage` del navegador (claves `concurso.*.v2`).
 
-- **La confirmación por correo es simulada**: el correo se muestra en pantalla, así que en esta versión cualquiera puede "confirmar" un correo que no es suyo. Para que la doble confirmación valga hace falta un backend que envíe el correo.
-- **Duplicados:** los correos con mayúsculas, espacios o, en Gmail, puntos y «+etiqueta» cuentan como el mismo; pero la comprobación es por navegador, no entre dispositivos.
-- **`localStorage` guarda los datos solo en el navegador de cada visitante.** La lista de participantes reales no llega al panel de la tienda. Para producción hay que pasar a un backend (por ejemplo, Supabase + un servicio de correo).
-- **El código del panel viaja en el JavaScript**: no es seguridad real hasta que haya autenticación en servidor.
-- La huella encadenada permite detectar alteraciones del registro, pero quien controla el navegador podría regenerarlo entero; por eso conviene **publicar la huella final** junto con el resultado.
-- Los textos legales son provisionales y deben revisarse (y confirmar si este tipo de sorteo requiere permiso ante la Secretaría de Gobernación).
+### Despliegue
+
+- **Vercel:** proyecto `concurso-instrumentos`, conectado al repositorio. Si un push a `main` no se despliega solo, se lanza un despliegue de producción desde el panel de Vercel.
+- **GitHub Pages:** publica la rama `gh-pages`, que contiene la compilación (`dist/`). No se actualiza sola: tras `npm run build`, se sustituye el contenido de `gh-pages` por el de `dist/` (con un archivo `.nojekyll`) y se hace push.
+
+---
+
+## Limitaciones y siguiente paso
+
+Esta versión sigue el stack del encargo y es una demostración funcional. Para uso real hace falta, en el pulido final:
+
+- **Backend** donde se guarden las inscripciones: con `localStorage`, la lista de participantes reales queda en el navegador de cada visitante y no llega al panel de la tienda.
+- **Envío real de correos** (confirmación y aviso al ganador) con las plantillas ya preparadas.
+- **Autenticación real del panel**: la clave de demo viaja en el JavaScript.
+- **Hora del servidor** para el cierre automático.
+- **Publicar la huella final del sorteo** junto con el resultado: la cadena de huellas detecta alteraciones del registro, pero quien controla el navegador podría regenerarlo entero.
+- **Revisión legal** de las bases y confirmación de si este tipo de sorteo requiere permiso ante la Secretaría de Gobernación.
+- **Materiales reales del cliente** (tabla anterior).
