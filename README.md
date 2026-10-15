@@ -35,6 +35,32 @@ Al no haber backend, estas dos garantías son completas en la lógica pero tiene
 
 ---
 
+## Qué está simulado y cómo se comporta
+
+Esta versión no tiene backend. Esto es lo que es simulado, lo que no existe y lo que es real:
+
+| Funcionalidad | Estado | Cómo se comporta |
+|---|---|---|
+| **Correo de confirmación** | Simulado | No se envía nada. Al inscribirse, la persona ve en pantalla el correo que recibiría (asunto, texto y enlace) y un botón para confirmar. El enlace funciona igual que funcionaría el del correo real. |
+| **Correo al ganador o suplente** | Simulado | No se envía. En la pestaña Sorteo hay un botón «Escribir al ganador por correo» que abre el cliente de correo del administrador con el texto ya redactado, y la pestaña Correos permite copiarlo. |
+| **Acceso al panel** | Simulado | Una clave de demo (`tijuana2026`) comprobada en el navegador. No es seguridad real. |
+| **Base de datos** | Simulada con `localStorage` | Todo se guarda en el navegador de quien lo usa; no se comparte entre dispositivos ni con el panel de la tienda. |
+| **Hora de cierre** | Con la hora del dispositivo | El cierre automático se calcula con el reloj del dispositivo del visitante. |
+| **Pagos** | No existen | El encargo excluye sorteos con compra o pago: participar es gratis. |
+| **WhatsApp y redes sociales** | No existen | El encargo excluye mecánicas que dependan de redes. No hay integración con WhatsApp ni se pide seguir cuentas. |
+| Sorteo, duplicados, consentimientos, cierre, exportaciones | **Reales** | Funcionan de verdad dentro del navegador, con las salvedades de la sección «Alcance de la demostración». |
+
+## Datos de ejemplo y cómo reiniciarlos
+
+El panel viene con **20 inscripciones ficticias** (16 confirmadas y 4 sin confirmar, 11 con permiso de comunicaciones, con y sin permiso de comunicaciones, con y sin teléfono; nombres y correos inventados con el dominio `ejemplo.mx`).
+
+- **Se cargan solas** la primera vez que se entra al panel en un navegador sin datos. Al entrar verás la barra «Modo demostración».
+- **Recargarlas:** botón «Cargar datos de ejemplo» (o «Recargar datos de ejemplo») de esa barra. Sustituye lo que haya guardado en el navegador.
+- **Empezar de cero:** botón «Borrar todo y empezar de cero» de la barra. Borra inscripciones, consentimientos, sorteos, ajustes y actividad. No se vuelven a cargar solas.
+- **Reinicio a mano:** en el navegador, `F12` → Aplicación (Application) → Almacenamiento local → borrar las claves que empiezan por `concurso.`; o en la consola, `localStorage.clear()` y recargar la página.
+- **Probar el sorteo con esos datos:** en **Ajustes** pon una fecha de cierre pasada (por ejemplo, hace tres días), guarda y ve a **Sorteo**.
+- **Al publicar el concurso real**, pon `demoTools: false` en `src/config.ts`: se oculta la barra y desaparece la carga automática, de modo que nadie puede borrar o sustituir datos desde el panel.
+
 ## Cómo funciona
 
 ### Landing (`#/`)
@@ -58,7 +84,7 @@ Bases legales completas y accesibles, con aviso de privacidad (derechos ARCO). *
 - **Clave de demo: `tijuana2026`** (`adminCode` en `src/config.ts`, o variable `VITE_ADMIN_CODE`). Acceso simulado: la clave viaja en el JavaScript y no es seguridad real.
 - **Resumen:** inscripciones, confirmadas, sin confirmar y sorteos hechos.
 - **Participantes:** lista con estado y consentimientos; exportación a CSV (todos, confirmados, con permiso de comunicaciones); confirmación manual (queda marcada y registrada).
-- **Sorteo:** habilitado al terminar el margen de confirmación; verifica la integridad del registro y muestra la huella final para publicarla junto al resultado.
+- **Sorteo:** habilitado al terminar el margen de confirmación; verifica la integridad del registro, muestra la huella final para publicarla junto al resultado y abre el correo al ganador ya redactado.
 - **Correos:** plantillas de confirmación y de ganador/suplente, con botón de copiar.
 - **Ajustes:** fecha de cierre (en hora de Tijuana), cerrar ahora y reabrir; bloqueados tras el primer sorteo.
 - **Actividad:** registro de cambios de fecha, cierres, confirmaciones manuales, eliminaciones y sorteos, exportable.
@@ -106,6 +132,7 @@ Todo lo ficticio está marcado como `PROVISIONAL` en `src/config.ts`. Las bases 
 - `basesVersion`: versión de las bases; se guarda con el consentimiento de cada participante. Cámbiala cuando cambie el texto legal.
 - `legalDraft`: mientras sea `true`, las bases muestran el aviso de borrador.
 - `adminCode`: clave del panel. **Cámbiala antes de publicar.**
+- `demoTools`: barra y carga automática de datos de ejemplo del panel. **Ponlo en `false` antes de publicar.**
 
 ---
 
@@ -120,17 +147,21 @@ En esta versión **no se envía ningún correo**: al inscribirse se ve el correo
 
 ---
 
-## Desarrollo
+## Cómo arrancar el proyecto
 
-Desde tu ordenador, dentro de la carpeta del proyecto:
+Necesitas Node.js 20.19 o superior. Desde tu ordenador, dentro de la carpeta del proyecto:
 
 ```bash
+git clone https://github.com/osalgado50/concurso-instrumentos.git
+cd concurso-instrumentos
 npm install
-npm run dev      # servidor local
-npm test         # 31 tests de las reglas del concurso (vitest)
+npm run dev      # servidor local (muestra la dirección en la terminal)
+npm test         # 35 tests de las reglas del concurso (vitest)
 npm run build    # comprueba tipos y genera dist/
 npm run preview  # sirve dist/ en local
 ```
+
+Para ver el panel en local abre `/#/admin` con la clave de demo. Dónde está cada cosa: `src/config.ts` (datos del concurso), `src/components/` (pantallas), `src/lib/` (reglas) y `tests/`; el detalle está en «Estructura» más abajo.
 
 ### Estructura
 
@@ -144,11 +175,12 @@ src/
     draw.ts            sorteo y cadena de huellas
     state.ts           fechas: apertura, cierre, margen, sorteo habilitado
     emails.ts          plantillas de correo
+    demo.ts            datos de ejemplo y reinicio (demoTools)
     csv.ts             exportaciones seguras
     storage.ts         lectura y escritura en localStorage
     time.ts, useNow.ts fechas por zona horaria y reloj reactivo
 public/                404.html (reenvío de rutas), imagen de portada, favicon
-tests/                 concurso, emails y teléfono (vitest)
+tests/                 concurso, emails, teléfono y datos de ejemplo (vitest)
 ```
 
 Los datos viven en el `localStorage` del navegador (claves `concurso.*.v2`).

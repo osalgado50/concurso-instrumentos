@@ -47,6 +47,11 @@ export const config = {
   // PROVISIONAL: correo de contacto real de la tienda
   contactEmail: 'concurso@tutiendadeinstrumentos.mx',
 
+  // Herramientas de demostración del panel: carga datos de ejemplo la primera
+  // vez que se abre y permite borrarlo todo. PROVISIONAL: ponlo en false al
+  // publicar el concurso real (oculta la barra de demo y la carga automática).
+  demoTools: true,
+
   heroImage: './hero.webp',
 
   // Sección destacada del premio. PROVISIONAL: sustituye por los datos reales.

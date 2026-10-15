@@ -19,6 +19,7 @@ import { participantsCsv, drawCsv, auditCsv } from '../lib/csv';
 import { fmtShort, fmt, toZonedInput, fromZonedInput } from '../lib/time';
 import { useNow } from '../lib/useNow';
 import { confirmationEmail, winnerEmail } from '../lib/emails';
+import { autoSeedIfEmpty, seedDemo, clearAll, getDemoState } from '../lib/demo';
 import type { Draw } from '../types';
 
 const ADMIN_KEY = 'concurso.adminSession';
@@ -48,6 +49,12 @@ export default function Admin() {
   const participants = getParticipants();
   const consents = getConsents();
   const draws = getDraws();
+
+  // Primera visita al panel sin datos: se cargan inscripciones de ejemplo (ver lib/demo.ts).
+  useEffect(() => {
+    if (authed && autoSeedIfEmpty()) rerender();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed]);
 
   const [chain, setChain] = useState<{ ok: boolean; brokenAt?: number } | null>(null);
   useEffect(() => {
@@ -144,6 +151,54 @@ export default function Admin() {
           Salir
         </button>
       </div>
+
+      {config.demoTools && (
+        <div
+          role="status"
+          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/40 bg-brand/10 px-4 py-3 text-sm"
+        >
+          <p>
+            <strong>Modo demostración.</strong>{' '}
+            {getDemoState() === 'seeded'
+              ? 'Estás viendo inscripciones ficticias para probar el panel, las exportaciones y el sorteo.'
+              : participants.length === 0
+                ? 'El panel está vacío. Puedes cargar inscripciones ficticias para probarlo.'
+                : 'Estás viendo las inscripciones reales hechas en este navegador. Puedes sustituirlas por datos de ejemplo para probar el sorteo.'}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                if (
+                  confirm(
+                    'Se sustituirán los datos actuales de este navegador por inscripciones de ejemplo. ¿Continuar?',
+                  )
+                ) {
+                  seedDemo();
+                  rerender();
+                }
+              }}
+              className="rounded-lg bg-brand px-3 py-1.5 font-semibold text-night hover:brightness-110"
+            >
+              {getDemoState() === 'seeded' ? 'Recargar datos de ejemplo' : 'Cargar datos de ejemplo'}
+            </button>
+            <button
+              onClick={() => {
+                if (
+                  confirm(
+                    'Se borrarán TODOS los datos del concurso guardados en este navegador (inscripciones, sorteos y actividad). ¿Continuar?',
+                  )
+                ) {
+                  clearAll();
+                  rerender();
+                }
+              }}
+              className="rounded-lg border border-white/25 px-3 py-1.5 font-semibold hover:bg-white/10"
+            >
+              Borrar todo y empezar de cero
+            </button>
+          </div>
+        </div>
+      )}
 
       <nav className="mt-6 flex gap-1 overflow-x-auto">
         {tabs.map((t) => (
@@ -344,14 +399,22 @@ export default function Admin() {
                 >
                   {draws.length === 0 ? 'Seleccionar ganador al azar' : 'Elegir suplente'}
                 </button>
-                {lastDraw && (
-                  <a
-                    href={`mailto:${encodeURIComponent(lastDraw.winnerEmail)}?subject=${encodeURIComponent(`¡Ganaste el ${config.title}!`)}&body=${encodeURIComponent(`Hola ${lastDraw.winnerNombre},\n\n¡Felicidades! Tu correo fue seleccionado al azar como ${lastDraw.kind} del ${config.title} el ${fmt(lastDraw.createdAt)}.\n\nEscríbenos a ${config.contactEmail} o visítanos para coordinar la entrega de tu premio.\n\n${config.storeName}`)}`}
-                    className="rounded-xl border border-white/20 px-6 py-3 font-semibold hover:bg-white/5"
-                  >
-                    Escribir al ganador por correo
-                  </a>
-                )}
+                {lastDraw && (() => {
+                  // Mismo texto que la plantilla de la pestaña "Correos".
+                  const m = winnerEmail(
+                    { nombre: lastDraw.winnerNombre },
+                    lastDraw.kind,
+                    new Date(lastDraw.createdAt),
+                  );
+                  return (
+                    <a
+                      href={`mailto:${encodeURIComponent(lastDraw.winnerEmail)}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`}
+                      className="rounded-xl border border-white/20 px-6 py-3 font-semibold hover:bg-white/5"
+                    >
+                      Escribir al ganador por correo
+                    </a>
+                  );
+                })()}
               </div>
               {eligiblePool.length === 0 && draws.length > 0 && (
                 <p className="mt-3 text-sm text-ink-soft">No quedan más participantes en el bombo.</p>
