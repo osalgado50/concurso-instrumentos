@@ -21,9 +21,20 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 /**
  * Normaliza el correo para detectar duplicados: forma Unicode NFKC, sin ningún
  * espacio y en minúsculas. "  Ana@Correo.MX " y "ana@correo.mx" son el mismo.
+ *
+ * Además, en Gmail/Googlemail los puntos y la etiqueta tras "+" no cambian el
+ * buzón, así que "a.na+sorteo@gmail.com" y "ana@gmail.com" cuentan como el
+ * mismo correo. En el resto de dominios solo se quita lo anterior, porque ahí
+ * los puntos y el "+" sí pueden distinguir buzones.
  */
 export function normalizeEmail(email: string): string {
-  return email.normalize('NFKC').replace(/\s+/g, '').toLowerCase();
+  const base = email.normalize('NFKC').replace(/\s+/g, '').toLowerCase();
+  const at = base.lastIndexOf('@');
+  if (at < 1) return base;
+  const domain = base.slice(at + 1);
+  if (domain !== 'gmail.com' && domain !== 'googlemail.com') return base;
+  const local = base.slice(0, at).split('+')[0].replace(/\./g, '');
+  return `${local}@gmail.com`;
 }
 
 export function findParticipant(emailKey: string): Participant | undefined {

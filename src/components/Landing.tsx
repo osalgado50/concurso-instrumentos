@@ -28,7 +28,7 @@ const trust = [
   },
   {
     t: 'Una participación por correo',
-    d: 'Cada correo cuenta una sola vez, aunque se escriba con mayúsculas o espacios.',
+    d: 'Cada correo cuenta una sola vez, aunque se escriba con mayúsculas, espacios o, en Gmail, con puntos o «+».',
   },
   {
     t: 'Sorteo demostrable',

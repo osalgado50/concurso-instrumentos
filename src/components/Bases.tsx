@@ -50,8 +50,10 @@ export default function Bases() {
         <p>
           Cada dirección de correo electrónico cuenta como una única
           participación, aunque se escriba con mayúsculas o minúsculas, con o
-          sin espacios. Las inscripciones duplicadas se detectan y descartan
-          automáticamente.
+          sin espacios. En las cuentas de Gmail también se considera la misma
+          dirección la que solo cambia en puntos o en una etiqueta tras el
+          signo «+» (por ejemplo, ana.lopez@gmail.com y analopez+x@gmail.com).
+          Las inscripciones duplicadas se detectan y descartan automáticamente.
         </p>
       </Section>
 

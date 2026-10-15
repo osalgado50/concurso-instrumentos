@@ -54,6 +54,25 @@ describe('1. un correo solo se inscribe una vez', () => {
     expect(getParticipants()).toHaveLength(1);
     expect(normalizeEmail(' A B@X.com ')).toBe('ab@x.com');
   });
+
+  it('trata como el mismo buzón las variantes de Gmail (puntos y +etiqueta)', () => {
+    expect(addParticipant(mk('ana.lopez@gmail.com'), during).ok).toBe(true);
+    for (const v of ['analopez@gmail.com', 'Ana.Lopez+sorteo@Gmail.com', 'a.n.a.l.o.p.e.z+x+y@googlemail.com']) {
+      const r = addParticipant(mk(v), during);
+      expect(r.ok, v).toBe(false);
+      if (!r.ok) expect(r.reason).toBe('duplicate');
+    }
+    expect(getParticipants()).toHaveLength(1);
+  });
+
+  it('no altera dominios que no son Gmail ni acepta un buzón vacío', () => {
+    expect(normalizeEmail('a.na+x@ejemplo.mx')).toBe('a.na+x@ejemplo.mx');
+    expect(addParticipant(mk('ana@ejemplo.mx'), during).ok).toBe(true);
+    expect(addParticipant(mk('a.na@ejemplo.mx'), during).ok).toBe(true);
+    const r = addParticipant(mk('+x@gmail.com'), during);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe('email');
+  });
 });
 
 describe('2. una inscripción sin confirmar no participa', () => {
