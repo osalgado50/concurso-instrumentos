@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-night: oklch(0.2 0.03 265);
+  --color-night-soft: oklch(0.27 0.035 265);
+  --color-brand: oklch(0.8 0.16 75);
+  --color-brand-deep: oklch(0.62 0.2 38);
+  --color-ink: oklch(0.95 0.01 90);
+  --color-ink-soft: oklch(0.78 0.02 90);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-night);
+  color: var(--color-ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
