@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { addParticipant } from '../lib/store';
 import type { AddResult } from '../lib/store';
-import { isOpen, isStarted, deadline } from '../lib/state';
+import { isOpen, isStarted, deadline, confirmDeadline } from '../lib/state';
+import { confirmationEmail } from '../lib/emails';
 import { useNow } from '../lib/useNow';
 import { fmt } from '../lib/time';
 import type { Participant } from '../types';
@@ -64,15 +65,22 @@ export default function Inscribir() {
 
   if (done) {
     const link = `${window.location.origin}${window.location.pathname}#/confirmar?t=${done.token}`;
+    const mail = confirmationEmail(done, link, confirmDeadline());
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center">
         <div className="rounded-2xl bg-night-soft border border-brand/30 p-8">
           <h1 className="text-2xl font-black">¡Inscripción recibida!</h1>
           <p className="mt-3 text-ink-soft">
-            Falta un paso: confirma tu correo. En la versión final, este enlace
-            te llega por correo electrónico; por ahora lo ves aquí mismo.
+            Falta un paso: confirma tu correo. En la versión final este mensaje te llega por
+            correo electrónico; en esta demostración lo ves aquí mismo.
           </p>
-          <p className="mt-4 break-all rounded-lg bg-night p-3 text-sm">{link}</p>
+          <div className="mt-5 rounded-xl border border-white/15 bg-night p-4 text-left text-sm">
+            <p className="text-ink-soft">Correo de ejemplo</p>
+            <p className="mt-1 font-semibold">{mail.subject}</p>
+            <pre className="mt-3 whitespace-pre-wrap break-words font-sans leading-relaxed">
+              {mail.body}
+            </pre>
+          </div>
           <a
             href={`#/confirmar?t=${done.token}`}
             className="mt-6 inline-block rounded-xl bg-brand px-8 py-3 font-bold text-night hover:brightness-110 transition"

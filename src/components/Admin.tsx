@@ -18,6 +18,8 @@ import { performDraw, verifyChain } from '../lib/draw';
 import { participantsCsv, drawCsv, auditCsv } from '../lib/csv';
 import { fmtShort, fmt, toZonedInput, fromZonedInput } from '../lib/time';
 import { useNow } from '../lib/useNow';
+import { confirmationEmail, winnerEmail } from '../lib/emails';
+import type { Draw } from '../types';
 
 const ADMIN_KEY = 'concurso.adminSession';
 
@@ -31,7 +33,7 @@ function downloadCsv(name: string, csv: string) {
   URL.revokeObjectURL(url);
 }
 
-type Tab = 'resumen' | 'participantes' | 'sorteo' | 'ajustes' | 'auditoria';
+type Tab = 'resumen' | 'participantes' | 'sorteo' | 'correos' | 'ajustes' | 'auditoria';
 
 export default function Admin() {
   const [authed, setAuthed] = useState(sessionStorage.getItem(ADMIN_KEY) === '1');
@@ -123,6 +125,7 @@ export default function Admin() {
     { id: 'resumen', label: 'Resumen' },
     { id: 'participantes', label: 'Participantes' },
     { id: 'sorteo', label: 'Sorteo' },
+    { id: 'correos', label: 'Correos' },
     { id: 'ajustes', label: 'Ajustes' },
     { id: 'auditoria', label: 'Actividad' },
   ];
@@ -422,6 +425,8 @@ export default function Admin() {
         </div>
       )}
 
+      {tab === 'correos' && <EmailsTab lastDraw={lastDraw} />}
+
       {tab === 'ajustes' && <SettingsTab rerender={rerender} frozen={frozen} />}
 
       {tab === 'auditoria' && (
@@ -453,6 +458,74 @@ export default function Admin() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Plantillas de correo listas para el envío real. Aquí solo se previsualizan y se copian. */
+function EmailsTab({ lastDraw }: { lastDraw: Draw | null }) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const confirmation = confirmationEmail(
+    { nombre: 'Ana López' },
+    `${window.location.origin}${window.location.pathname}#/confirmar?t=EJEMPLO`,
+    confirmDeadline(),
+  );
+  const winner = winnerEmail(
+    { nombre: lastDraw?.winnerNombre ?? 'Ana López' },
+    lastDraw?.kind ?? 'ganador',
+    lastDraw ? new Date(lastDraw.createdAt) : new Date(config.drawDate),
+  );
+
+  async function copy(id: string, t: { subject: string; body: string }) {
+    try {
+      await navigator.clipboard.writeText(`Asunto: ${t.subject}\n\n${t.body}`);
+      setCopied(id);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      setCopied(null);
+    }
+  }
+
+  const items = [
+    { id: 'confirmacion', title: 'Confirmación de inscripción', t: confirmation },
+    {
+      id: 'ganador',
+      title: lastDraw
+        ? `Aviso a ${lastDraw.kind === 'suplente' ? 'suplente' : 'ganador/a'} (último sorteo)`
+        : 'Aviso a ganador/a (ejemplo)',
+      t: winner,
+    },
+  ];
+
+  return (
+    <div className="mt-8">
+      <h2 className="text-lg font-bold">Plantillas de correo</h2>
+      <p className="mt-2 text-sm text-ink-soft">
+        En esta versión los correos no se envían: la persona ve su correo de confirmación en
+        pantalla y tú copias el aviso al ganador desde aquí. Cuando se conecte el servicio de
+        envío, se usan estos mismos textos (están en <code>src/lib/emails.ts</code>).
+      </p>
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        {items.map((it) => (
+          <div key={it.id} className="rounded-2xl border border-white/10 bg-night-soft p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-bold">{it.title}</h3>
+              <button
+                onClick={() => copy(it.id, it.t)}
+                className="rounded-lg border border-white/20 px-3 py-1.5 text-xs hover:bg-white/5"
+              >
+                {copied === it.id ? 'Copiado' : 'Copiar'}
+              </button>
+            </div>
+            <p className="mt-3 text-sm">
+              <span className="text-ink-soft">Asunto:</span> {it.t.subject}
+            </p>
+            <pre className="mt-3 whitespace-pre-wrap break-words rounded-xl bg-night p-4 text-sm font-sans leading-relaxed">
+              {it.t.body}
+            </pre>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
