@@ -13,6 +13,128 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ---------- Movimiento (solo si la persona no pidió reducirlo) ---------- */
+
+/* Foco visible para teclado en todos los enlaces y botones */
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Un único momento al cargar: un foco de escenario cruza el titular. */
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    .title-sweep {
+      background-image: linear-gradient(
+        100deg,
+        var(--color-ink) 0 38%,
+        #fff 45%,
+        var(--color-brand) 50%,
+        var(--color-ink) 58% 100%
+      );
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: title-sweep 2.2s cubic-bezier(0.22, 0.61, 0.36, 1) 0.2s 1 both;
+    }
+  }
+
+  /* Botón principal: late despacio como el piloto de un amplificador. */
+  .cta-live {
+    animation: cta-glow 3.4s ease-in-out infinite;
+  }
+  .cta-live::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      rgb(255 255 255 / 0.55) 50%,
+      transparent 65%
+    );
+    transform: translateX(-120%);
+    animation: cta-shine 5.5s ease-in-out 1.5s infinite;
+  }
+  .cta-live:hover {
+    animation-play-state: paused;
+    transform: translateY(-2px) scale(1.03);
+  }
+  .cta-live:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  /* Foto del premio: deriva lenta, como una cámara que se acerca. */
+  .prize-drift {
+    animation: prize-drift 24s ease-in-out infinite alternate;
+  }
+
+  /* Etiqueta de valor: flota suavemente. */
+  .prize-float {
+    animation: prize-float 5s ease-in-out infinite;
+  }
+}
+
+.cta-live {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+@keyframes title-sweep {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+
+@keyframes cta-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 10px 30px -10px oklch(0.8 0.16 75 / 0.45),
+      0 0 0 0 oklch(0.8 0.16 75 / 0.35);
+  }
+  50% {
+    box-shadow:
+      0 14px 40px -8px oklch(0.8 0.16 75 / 0.7),
+      0 0 0 12px oklch(0.8 0.16 75 / 0);
+  }
+}
+
+@keyframes cta-shine {
+  0%,
+  60% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes prize-drift {
+  from {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.08) translate3d(-1.5%, -1%, 0);
+  }
+}
+
+@keyframes prize-float {
+  0%,
+  100% {
+    transform: rotate(-4deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-4deg) translateY(-8px);
+  }
+}
+
 body {
   background-color: var(--color-night);
   color: var(--color-ink);

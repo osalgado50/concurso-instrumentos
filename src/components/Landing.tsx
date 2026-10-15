@@ -40,6 +40,37 @@ const trust = [
   },
 ];
 
+/** Cuenta atrás hasta el cierre: da sentido de urgencia real y se actualiza cada segundo. */
+function Countdown({ to, now }: { to: Date; now: Date }) {
+  const ms = Math.max(0, to.getTime() - now.getTime());
+  const s = Math.floor(ms / 1000);
+  const parts = [
+    { v: Math.floor(s / 86400), l: 'días' },
+    { v: Math.floor((s % 86400) / 3600), l: 'horas' },
+    { v: Math.floor((s % 3600) / 60), l: 'min' },
+    { v: s % 60, l: 'seg' },
+  ];
+  return (
+    <div className="mt-10">
+      <p className="text-sm text-ink-soft">Las inscripciones cierran en</p>
+      <div
+        role="timer"
+        aria-label={`${parts[0].v} días, ${parts[1].v} horas y ${parts[2].v} minutos para el cierre`}
+        className="mt-3 inline-flex divide-x divide-white/15 rounded-2xl border border-white/15 bg-night/60 backdrop-blur"
+      >
+        {parts.map((p) => (
+          <div key={p.l} className="w-16 sm:w-24 py-3 text-center">
+            <div className="text-3xl sm:text-5xl font-black tabular-nums leading-none">
+              {String(p.v).padStart(2, '0')}
+            </div>
+            <div className="mt-1 text-xs sm:text-sm text-ink-soft">{p.l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   // El reloj refresca la insignia y los botones al llegar la hora de apertura o cierre.
   const now = useNow();
@@ -64,23 +95,23 @@ export default function Landing() {
           className="absolute inset-0 h-full w-full object-cover opacity-25"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-night/40 via-night/70 to-night" />
-        <div className="relative mx-auto max-w-5xl px-4 py-20 md:py-28 text-center">
+        <div className="relative mx-auto max-w-5xl px-4 py-16 md:py-28 text-center">
           <p className="inline-block rounded-full border border-brand/40 bg-brand/10 px-4 py-1 text-sm text-brand">
             {badge}
           </p>
-          <h1 className="mt-6 text-4xl md:text-6xl font-black tracking-tight leading-tight">
+          <h1 className="title-sweep mt-6 text-[clamp(2.9rem,11vw,6.75rem)] font-black tracking-tighter leading-[0.92] text-ink">
             {config.title}
           </h1>
-          <p className="mt-4 text-lg md:text-xl text-ink-soft max-w-2xl mx-auto">
+          <p className="mt-6 text-xl md:text-2xl text-ink-soft max-w-2xl mx-auto leading-snug">
             Gana <strong className="text-ink">{config.prize}</strong>. Participa
             gratis desde {config.city}: sin compra, sin vueltas, y con un
             ganador que nadie pueda discutir.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
             {open ? (
               <a
                 href="#/inscribir"
-                className="rounded-xl bg-brand px-8 py-4 text-lg font-bold text-night shadow-lg shadow-brand/20 hover:brightness-110 transition"
+                className="cta-live rounded-xl bg-brand px-10 py-5 text-xl font-extrabold text-night"
               >
                 Participar gratis
               </a>
@@ -96,6 +127,53 @@ export default function Landing() {
               Ver bases legales
             </a>
           </div>
+          {open && <Countdown to={deadline()} now={now} />}
+        </div>
+      </section>
+
+      {/* El premio */}
+      <section
+        aria-labelledby="premio"
+        className="mx-auto max-w-6xl px-4 pt-4 pb-16 md:pb-24"
+      >
+        <div className="relative isolate overflow-hidden rounded-3xl border border-brand/30 shadow-2xl shadow-brand/10 aspect-[4/5] sm:aspect-[16/10] lg:aspect-[21/9]">
+          <img
+            src={config.prizeImage}
+            alt="Guitarras eléctricas y amplificador sobre un escenario iluminado"
+            width={1920}
+            height={1024}
+            loading="lazy"
+            decoding="async"
+            className="prize-drift absolute inset-0 -z-10 h-full w-full object-cover object-[78%_55%]"
+          />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-t from-night via-night/45 to-transparent" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-night/80 via-night/20 to-transparent" />
+
+          <p className="prize-float absolute right-4 top-4 md:right-8 md:top-8 -rotate-[4deg] rounded-2xl bg-brand px-4 py-2 text-sm md:text-base font-extrabold text-night shadow-xl shadow-black/40">
+            {config.prizeValue}
+          </p>
+
+          <div className="absolute inset-x-0 bottom-0 p-6 md:p-12 max-w-3xl">
+            <h2
+              id="premio"
+              className="text-[clamp(2.2rem,7vw,4.75rem)] font-black tracking-tighter leading-[0.95] text-ink"
+            >
+              {config.prizeHeadline}
+            </h2>
+            {open && (
+              <a
+                href="#/inscribir"
+                className="cta-live mt-6 inline-block rounded-xl bg-brand px-8 py-4 text-lg font-extrabold text-night"
+              >
+                Quiero ganarla
+              </a>
+            )}
+          </div>
+          {config.prizeImageIsPlaceholder && (
+            <p className="absolute bottom-3 right-4 text-xs text-ink-soft/80">
+              Foto ilustrativa
+            </p>
+          )}
         </div>
       </section>
 

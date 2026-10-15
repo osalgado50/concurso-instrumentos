@@ -47,5 +47,15 @@ export const config = {
   // PROVISIONAL: correo de contacto real de la tienda
   contactEmail: 'concurso@tutiendadeinstrumentos.mx',
 
-  heroImage: './hero.jpg',
+  heroImage: './hero.webp',
+
+  // Sección destacada del premio. PROVISIONAL: sustituye por los datos reales.
+  prizeHeadline: 'Una guitarra eléctrica con amplificador',
+  prizeValue: 'Valor aproximado: $8,000 MXN',
+  // Foto del premio. PROVISIONAL: ahora se usa la imagen de portada; cuando
+  // el cliente envíe la foto real, ponla en public/ y cambia esta ruta.
+  prizeImage: './hero.webp',
+  // Mientras sea true, la foto lleva la nota "Foto ilustrativa". Ponlo en
+  // false cuando prizeImage sea la foto real del premio.
+  prizeImageIsPlaceholder: true,
 };
